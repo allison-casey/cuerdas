@@ -44,8 +44,8 @@
   (when (string? s)
     (cond
       [(none? prefix) False]
-      [(empty? prefix) False]
-      [True (str.startswith s prefix)])))
+      [(empty? prefix) True]
+      [:else (.startswith s prefix)])))
 
 (defn ends-with?
   [s suffix]
@@ -55,7 +55,7 @@
       [(none? suffix) False]
       [(none? suffix) False]
       [(empty? suffix) True]
-      [True (str.endswith s suffix)])))
+      [:else (str.endswith s suffix)])))
 
 (defn lower
   [s]
@@ -69,7 +69,7 @@
   (when (string? s)
     (str.upper s)))
 
-(defn caseless-compare
+(defn caseless=
   [s1 s2]
   "Compare strings in a case-insensitive manner."
   (when (string? s1)
@@ -80,14 +80,14 @@
   "Checks if a string is empty or contains only whitespace."
   (when (string? s)
     (or (zero? (len s))
-        (-> (regex.compile f"[\s\p{Z}]+$")
+        (-> (regex.compile r"[\s\p{Z}]+$")
             (regex.match s)
             bool))))
 
 (defn alpha?
   [s]
   "Checks if a string contains only alpha characters."
-  (when (string? a)
+  (when (string? s)
     (-> r"^[a-zA-Z]+$"
         (regex.match s)
         bool)))
@@ -95,9 +95,9 @@
 (defn digits?
   [s]
   "Checks if a string contains only digit characters."
-  (when (string?)
+  (when (string? s)
     (-> r"^[0-9]+$"
-        (re.match s)
+        (regex.match s)
         bool)))
 
 (defn alphanum?
@@ -105,7 +105,7 @@
   "Checks if a string contains only alphanumeric characters."
   (when (string? s)
     (-> r"^[a-zA-Z0-9]+$"
-        (re.match s)
+        (regex.match s)
         bool)))
 
 (defn word?
@@ -114,7 +114,7 @@
   (when (string? s)
     (-> r"^[\p{N}\p{L}_-]+$"
         regex.compile
-        regex.match
+        (regex.match s)
         bool)))
 
 (defn letters?
@@ -124,7 +124,7 @@
   (when (string? s)
     (-> r"^\p{L}+$"
         regex.compile
-        regex.match
+        (regex.match s)
         bool)))
 
 (defn numeric?
@@ -178,7 +178,7 @@
 (setv lstrip ltrim)
 
 (defn repeat
-  [s &optional n]
+  [s &optional [n 1]]
   "Repeats string n times."
   (when (and (string? s)
              (isinstance n int))
@@ -281,6 +281,13 @@
       (when (string? s)
         (list (regex.findall re s)))))
 
+(defn join
+  [coll &optional separator]
+  "Joins strings together with given separator."
+  (if separator
+      (.join separator coll)
+      (.join "" coll)))
+
 (defn surround
   [s wrap]
   "Surround a string with another string or character."
@@ -290,15 +297,16 @@
 (defn unsurround
   [s surrounding]
   "Unsurround a string surrounded by another string or character."
-  (setv surrounding (str surrounding)
-        length (len surrounding)
-        fstr (cut s 0 length)
-        slength (len s)
-        rightend (- slength length)
-        lstr (cut s rightend slength))
-  (if (and (= fstr surrounding) (= lstr surrounding))
-      (cut s length rightend)
-      s))
+  (when (string? s)
+    (setv surrounding (str surrounding)
+          length (len surrounding)
+          fstr (cut s 0 length)
+          slength (len s)
+          rightend (- slength length)
+          lstr (cut s rightend slength))
+    (if (and (= fstr surrounding) (= lstr surrounding))
+        (cut s length rightend)
+        s)))
 
 (defn quote-str
   [s &optional [qchar "\""]]
@@ -400,7 +408,7 @@
      (js-selector \"LeadingDash\") ;; => -leading-dash
      (js-selector \"noLeadingDash\") ;; => no-leading-dash
   accepts keywords and strings, with any standard delimiter"
-  (-> s
+  (some-> s
       -stylize-split
       (-stylize-join "-" lower)))
 
@@ -530,57 +538,25 @@
          (-strip-tags-impl s tags {}))]
     [(and tags mapping) (-strip-tags-impl s tags mapping)]))
 
+(defn unindent
+  [s &optional r]
+  (defn helper
+    [s r]
+    (->> s lines spy (map (fn [x] (replace x r ""))) spy unlines))
 
-
-;; (with-decorator
-;;   (click.command)
-;;   (click.argument "manifest" :type (click.File "r"))
-;;   (click.option "-p" "--print" "_print" :is_flag True)
-;;   (defn cli [manifest _print]
-;;     "Cli tool for bulk editing of S.T.A.L.K.E.R. ogg vorbis commets."
-;;     (setv f (resource_stream --name-- "schema.yaml")
-;;           schema (yaml.load f :Loader yaml.FullLoader)
-;;           manifest (yaml.load manifest :Loader yaml.FullLoader)
-;;           cwd (Path.cwd))
-;;     (try (validate :instance manifest :schema schema)
-;;          (except [e ValidationError]
-;;            (click.echo e)
-;;            (return 1)))
-
-;;     (setv manifest (py->hy manifest))
-;;     (for [entry manifest]
-;;       (setv in-path (-> entry :in-path cwd.joinpath)
-;;             out-path (-> entry :out-path cwd.joinpath)
-;;             new-comments (if (in :comment entry) (:comment entry) {}))
-
-;;       (if (= in-path out-path)
-;;           (click.confirm (.join " " ["in-path and out-path are the same"
-;;                                      "and will result in overwritting source files."
-;;                                      "Would you like to continue"])
-;;                          :abort True
-;;                          :default False))
-
-;;       (in-path.mkdir :parents True :exist_ok True)
-;;       (out-path.mkdir :parents True :exist_ok True)
-;;       (setv files (in-path.glob (:glob entry)))
-
-;;       (for [file files]
-;;         (unless (= file.suffix ".ogg") continue)
-;;         (print (file.relative_to in-path))
-;;         (try
-;;           (setv (, data ident header) (parse-ogg new-comments file)
-;;                 file-path (out-path.joinpath (file.relative_to in-path)))
-;;           (.mkdir (. file-path parent) :parents True :exist_ok True)
-;;           (with [out (open file-path "wb")]
-;;             (out.write data))
-;;           (if _print
-;;               (do (click.echo (render-ogg (. file stem) ident header))
-;;                   (click.echo (+ "\n" (* "=" 25) "\n"))))
-;;           (except [e ValueError]
-;;             (click.echo e)))))))
-
-;; (defmain [&rest args]
-;;   (cli))
-
-
-
+  (if r
+      (helper s r)
+      (do (setv all-indents (->> (rest (lines s))
+                                 (remove blank?)
+                                 list
+                                 (+ [(last (lines s))])
+                                 (map (fn [x]
+                                        (as-> x $
+                                             (regex.finditer r"^( +)" $)
+                                             (next $)
+                                             (.group $ 0)
+                                             (len $)
+                                             ))))
+                min-indent (min all-indents)
+                r (regex.compile (+ "^ {" (str min-indent) "}")))
+          (helper s r))))
