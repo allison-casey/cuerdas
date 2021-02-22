@@ -7,14 +7,14 @@
 
 ;; ** Helpers
 (defmacro defall [&rest syms]
-  `(setv __all__ ~(lfor sym syms (mangle sym.name))))
+  `(setv __all__ ~(lfor sym syms (mangle (str sym)))))
 
-(defall empty? empty-or-none? includes? starts-with? ends-with lower upper caseless=
+(defall empty? empty-or-none? includes? starts-with? ends-with? lower upper caseless=
   blank? alpha? digits? alphanum? word? letters? numeric? trim rtrim ltrim clean strip rstrip
   repeat replace replace-first strip-newlines split reverse chars lines unlines words join
   surround unsurround quote-str unquote-str stylize capital camel snake phrase human title
   pascal kebab js-selector css-selector slug uslug keyword parse-number parse-float parse-int
-  one-of? to-bool pad collapse-whitespace strip-tags unindent helper)
+  one-of? to-bool pad collapse-whitespace strip-tags unindent)
 
 (setv keyword* keyword)
 
