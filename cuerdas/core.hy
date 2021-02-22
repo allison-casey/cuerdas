@@ -1,6 +1,20 @@
+;; * Cuerdas
+;; ** Imports
 (import regex
         math
         [numbers [Number]])
+(require [hy.extra.anaphoric [*]])
+
+;; ** Helpers
+(defmacro defall [&rest syms]
+  `(setv __all__ ~(lfor sym syms (mangle sym.name))))
+
+(defall empty? empty-or-none? includes? starts-with? ends-with lower upper caseless=
+  blank? alpha? digits? alphanum? word? letters? numeric? trim rtrim ltrim clean strip rstrip
+  repeat replace replace-first strip-newlines split reverse chars lines unlines words join
+  surround unsurround quote-str unquote-str stylize capital camel snake phrase human title
+  pascal kebab js-selector css-selector slug uslug keyword parse-number parse-float parse-int
+  one-of? to-bool pad collapse-whitespace strip-tags unindent helper)
 
 (setv keyword* keyword)
 
@@ -18,6 +32,7 @@
           g
           (last steps))))
 
+;; ** Lib
 (defn empty?
   [s]
   "Checks if a string is empty."
@@ -145,7 +160,6 @@
         (str.strip s chs)
         (str.strip s))))
 
-
 (defn rtrim
   [s &optional chs]
   "Removes whitespace or specific characters
@@ -154,7 +168,6 @@
     (if chs
         (str.rstrip s chs)
         (str.rstrip s))))
-
 
 (defn ltrim
   [s &optional chs]
@@ -211,7 +224,6 @@
   (when (string? s)
     (regex.sub match replacement s :count 1)))
 
-(defn spy [x] (print "LOG:" x) x)
 
 ;; (defn prune
 ;;   [s num &optional [subs "..."]]
@@ -335,7 +347,6 @@
         (.join join-with (chain [(first-fn head)] (map rest-fn tail)))
         (.join join-with (map first-fn coll)))))
 
-
 (defn stylize
   [s first-fn join-with &optional rest-fn]
     (setv remove-empty (fn [seq] (remove empty? seq))
@@ -415,7 +426,6 @@
 (setv -slug-tr-map
       (dict (zip "ąàáäâãåæăćčĉęèéëêĝĥìíïîĵłľńňòóöőôõðøśșšŝťțŭùúüűûñÿýçżźž"
                  "aaaaaaaaaccceeeeeghiiiijllnnoooooooossssttuuuuuunyyczzz")))
-
 
 (defn slug
   [s]
@@ -512,7 +522,7 @@
 
 (defn -strip-tags-impl
   [s tags mappings]
-  (setv kwdize (comp keyword lower name)
+  (setv kwdize (comp keyword lower #%(getattr %1 "name"))
         tags (cond
                [(none? tags) tags]
                [(string? tags) (set (kwdize tags))]
@@ -542,7 +552,7 @@
   [s &optional r]
   (defn helper
     [s r]
-    (->> s lines spy (map (fn [x] (replace x r ""))) spy unlines))
+    (->> s lines (map (fn [x] (replace x r ""))) unlines))
 
   (if r
       (helper s r)
