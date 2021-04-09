@@ -6,7 +6,7 @@
 (require [hy.extra.anaphoric [*]])
 
 ;; ** Helpers
-(defmacro defall [&rest syms]
+(defmacro defall [#* syms]
   `(setv __all__ ~(lfor sym syms (mangle (str sym)))))
 
 (defall empty? empty-or-none? includes? starts-with? ends-with? lower upper caseless=
@@ -19,7 +19,7 @@
 (setv keyword* keyword)
 
 (defmacro some->
-  [expr &rest forms]
+  [expr #* forms]
   "When expr is not nil, threads it into the first form (via ->),
   and when that result is not nil, through the next etc"
   (setv g (gensym)
@@ -152,7 +152,7 @@
         bool)))
 
 (defn trim
-  [s &optional chs]
+  [s [chs None]]
   "Removes whitespace or specific characters
   from both ends of string."
   (when (string? s)
@@ -161,7 +161,7 @@
         (str.strip s))))
 
 (defn rtrim
-  [s &optional chs]
+  [s [chs None]]
   "Removes whitespace or specific characters
   from right side of string."
   (when (string? s)
@@ -170,7 +170,7 @@
         (str.rstrip s))))
 
 (defn ltrim
-  [s &optional chs]
+  [s [chs None]]
   "Removes whitespace or specific characters
   from left side of string."
   (when (string? s)
@@ -191,7 +191,7 @@
 (setv lstrip ltrim)
 
 (defn repeat
-  [s &optional [n 1]]
+  [s [n 1]]
   "Repeats string n times."
   (when (and (string? s)
              (isinstance n int))
@@ -252,7 +252,7 @@
   (replace s r"[\n\r|\n]+" " "))
 
 (defn split
-  [s &optional [sep r"\s+"] num]
+  [s [sep r"\s+"] [num None]]
   (if-not num
       (cond
         [(none? s) s]
@@ -287,14 +287,14 @@
     (.join "\n" s)))
 
 (defn words
-  [s &optional [re r"[\p{N}\p{L}_-]+"]]
+  [s [re r"[\p{N}\p{L}_-]+"]]
   "Returns a vector of the words in the string."
   (if re
       (when (string? s)
         (list (regex.findall re s)))))
 
 (defn join
-  [coll &optional separator]
+  [coll [separator None]]
   "Joins strings together with given separator."
   (if separator
       (.join separator coll)
@@ -321,12 +321,12 @@
         s)))
 
 (defn quote-str
-  [s &optional [qchar "\""]]
+  [s [qchar "\""]]
   "Quotes a string."
   (surround s qchar))
 
 (defn unquote-str
-  [s &optional [qchar "\""]]
+  [s [qchar "\""]]
   (unsurround s qchar))
 
 (defn -stylize-split
@@ -340,7 +340,7 @@
       list))
 
 (defn -stylize-join
-  [coll join-with first-fn &optional rest-fn ]
+  [coll join-with first-fn [rest-fn None]]
   (when (iterable? coll)
     (setv (, head #* tail) coll)
     (if rest-fn
@@ -348,7 +348,7 @@
         (.join join-with (map first-fn coll)))))
 
 (defn stylize
-  [s first-fn join-with &optional rest-fn]
+  [s first-fn join-with [rest-fn None]]
     (setv remove-empty (fn [seq] (remove empty? seq))
           rest-fn (if-not rest-fn first-fn rest-fn))
    (-> s
@@ -489,7 +489,7 @@
   (one-of? ["1" "on" "true" "yes"] (lower s)))
 
 (defn pad
-  [s &optional [length 0] [padding " "] [type :left]]
+  [s [length 0] [padding " "] [type :left]]
   "Pads the str with characters until the total string
   length is equal to the passed length parameter. By
   default, pads on the left with the space char."
@@ -538,7 +538,7 @@
                           tag)))))
 
 (defn strip-tags
-  [s &optional tags mapping]
+  [s [tags None] [mapping None]]
   "Remove html tags from string."
   (cond
     [(and (none? tags) (none? mapping)) (-strip-tags-impl s None {})]
@@ -549,7 +549,7 @@
     [(and tags mapping) (-strip-tags-impl s tags mapping)]))
 
 (defn unindent
-  [s &optional r]
+  [s [r None]]
   (defn helper
     [s r]
     (->> s lines (map (fn [x] (replace x r ""))) unlines))
