@@ -16,7 +16,7 @@
   pascal kebab js-selector css-selector slug uslug keyword parse-number parse-float parse-int
   one-of? to-bool pad collapse-whitespace strip-tags unindent)
 
-(setv keyword* keyword)
+(setv keyword* hy.models.Keyword)
 
 (defmacro some->
   [expr #* forms]
