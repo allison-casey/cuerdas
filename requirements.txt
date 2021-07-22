@@ -1,2 +1,3 @@
-hy>=0.17.0
+hy>=1.0a3
+toolz
 regex

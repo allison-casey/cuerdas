@@ -2,7 +2,11 @@
 ;; ** Imports
 (import regex
         math
+        [collections.abc [Iterable]]
+        [itertools [chain]]
+        [toolz [identity first]]
         [numbers [Number]])
+
 (require [hy.extra.anaphoric [*]])
 
 ;; ** Helpers
@@ -11,10 +15,10 @@
 
 (defall empty? empty-or-none? includes? starts-with? ends-with? lower upper caseless=
   blank? alpha? digits? alphanum? word? letters? numeric? trim rtrim ltrim clean strip rstrip
-  repeat replace replace-first strip-newlines split reverse chars lines unlines words join
+  repeat replace replace-first strip-newlines split unlines words join
   surround unsurround quote-str unquote-str stylize capital camel snake phrase human title
   pascal kebab js-selector css-selector slug uslug keyword parse-number parse-float parse-int
-  one-of? to-bool pad collapse-whitespace strip-tags unindent)
+  to-bool pad collapse-whitespace strip-tags unindent)
 
 (setv keyword* hy.models.Keyword)
 
@@ -22,13 +26,27 @@
   [expr #* forms]
   "When expr is not nil, threads it into the first form (via ->),
   and when that result is not nil, through the next etc"
+  (import [toolz [cons interpose last]])
   (setv g (gensym)
-        steps (list (map (fn [step] `(if (none? ~g) None (-> ~g ~step)))
-                         forms)))
+        steps (lfor step forms `(if (is ~g None) None (-> ~g ~step))))
   `(do
      (setv ~g ~expr
-           ~@(interleave (repeat g) (butlast steps)))
-     ~(if (empty? steps)
+           ~@(->> steps butlast (interpose g) (cons g)))
+     ~(if (not (len steps))
+          g
+          (last steps))))
+
+(defmacro some->>
+  [expr #* forms]
+  "When expr is not nil, threads it into the first form (via ->),
+  and when that result is not nil, through the next etc"
+  (import [toolz [cons interpose last]])
+  (setv g (gensym)
+        steps (lfor step forms `(if (is ~g None) None (->> ~g ~step))))
+  `(do
+     (setv ~g ~expr
+           ~@(->> steps butlast (interpose g) (cons g)))
+     ~(if (not (len steps))
           g
           (last steps))))
 
@@ -36,126 +54,126 @@
 (defn empty?
   [s]
   "Checks if a string is empty."
-  (when (string? s)
-    (zero? (len s))))
+  (when (isinstance s str)
+    (= (len s) 0)))
 
 (defn empty-or-none?
   [s]
   "Conveinent helper for check emptines or if value is none."
-  (or (none? s)
+  (or (is s None)
       (empty? s)))
 
 (defn includes?
   [s subs]
   "Determines whether a string contains a substring"
-  (when (string? s)
-    (if (none? subs)
+  (when (isinstance s str)
+    (if (is subs None)
         False
         (in subs s))))
 
 (defn starts-with?
   [s prefix]
   "Check if the string starts with prefix"
-  (when (string? s)
+  (when (isinstance s str)
     (cond
-      [(none? prefix) False]
+      [(is prefix None) False]
       [(empty? prefix) True]
       [:else (.startswith s prefix)])))
 
 (defn ends-with?
   [s suffix]
   "Check if the string ends with suffix."
-  (when (string? s)
+  (when (isinstance s str)
     (cond
-      [(none? suffix) False]
-      [(none? suffix) False]
+      [(is suffix None) False]
+      [(is suffix None) False]
       [(empty? suffix) True]
       [:else (str.endswith s suffix)])))
 
 (defn lower
   [s]
   "Converts string to all lower-case"
-  (when (string? s)
+  (when (isinstance s str)
     (str.lower s)))
 
 (defn upper
   [s]
   "Converts string to all upper-case"
-  (when (string? s)
+  (when (isinstance s str)
     (str.upper s)))
 
 (defn caseless=
   [s1 s2]
   "Compare strings in a case-insensitive manner."
-  (when (string? s1)
+  (when (isinstance s1 str)
     (= (lower s1) (lower s2))))
 
 (defn blank?
   [s]
   "Checks if a string is empty or contains only whitespace."
-  (when (string? s)
-    (or (zero? (len s))
+  (when (isinstance s str)
+    (or (= (len s) 0)
         (-> (regex.compile r"[\s\p{Z}]+$")
-            (regex.match s)
-            bool))))
+           (regex.match s)
+           bool))))
 
 (defn alpha?
   [s]
   "Checks if a string contains only alpha characters."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^[a-zA-Z]+$"
-        (regex.match s)
-        bool)))
+       (regex.match s)
+       bool)))
 
 (defn digits?
   [s]
   "Checks if a string contains only digit characters."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^[0-9]+$"
-        (regex.match s)
-        bool)))
+       (regex.match s)
+       bool)))
 
 (defn alphanum?
   [s]
   "Checks if a string contains only alphanumeric characters."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^[a-zA-Z0-9]+$"
-        (regex.match s)
-        bool)))
+       (regex.match s)
+       bool)))
 
 (defn word?
   [s]
   "Checks if a string contains only the word characters."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^[\p{N}\p{L}_-]+$"
-        regex.compile
-        (regex.match s)
-        bool)))
+       regex.compile
+       (regex.match s)
+       bool)))
 
 (defn letters?
   [s]
   "Checks if a string contains only letters.
   This function will use all the unicode range."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^\p{L}+$"
-        regex.compile
-        (regex.match s)
-        bool)))
+       regex.compile
+       (regex.match s)
+       bool)))
 
 (defn numeric?
   [s]
   "Checks if a string contains only numeric values."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"^[+-]?([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)([eE][+-]?[0-9]+)?$"
-        regex.compile
-        (regex.match s)
-        bool)))
+       regex.compile
+       (regex.match s)
+       bool)))
 
 (defn trim
   [s [chs None]]
   "Removes whitespace or specific characters
   from both ends of string."
-  (when (string? s)
+  (when (isinstance s str)
     (if chs
         (str.strip s chs)
         (str.strip s))))
@@ -164,7 +182,7 @@
   [s [chs None]]
   "Removes whitespace or specific characters
   from right side of string."
-  (when (string? s)
+  (when (isinstance s str)
     (if chs
         (str.rstrip s chs)
         (str.rstrip s))))
@@ -173,7 +191,7 @@
   [s [chs None]]
   "Removes whitespace or specific characters
   from left side of string."
-  (when (string? s)
+  (when (isinstance s str)
     (if chs
         (str.lstrip s chs)
         (str.lstrip s))))
@@ -181,10 +199,10 @@
 (defn clean
   [s]
   "Trim and replace multiple spaces with a single space."
-  (when (string? s)
+  (when (isinstance s str)
     (-> r"[\s\p{Z}]+"
-        regex.compile
-        (regex.sub " " (trim s)))))
+       regex.compile
+       (regex.sub " " (trim s)))))
 
 (setv strip trim)
 (setv rstrip rtrim)
@@ -193,7 +211,7 @@
 (defn repeat
   [s [n 1]]
   "Repeats string n times."
-  (when (and (string? s)
+  (when (and (isinstance s str)
              (isinstance n int))
     (* s n)))
 
@@ -215,13 +233,13 @@
     (replace \"Almost Pig Latin\" #\"\\b(\\w)(\\w+)\\b\" \"$2$1ay\")
     ;; => \"lmostAay igPay atinLay\"
   "
-  (when (string? s)
+  (when (isinstance s str)
     (regex.sub match replacement s)))
 
 (defn replace-first
   [s match replacement]
   "Replaces first instance of match with replacement in s."
-  (when (string? s)
+  (when (isinstance s str)
     (regex.sub match replacement s :count 1)))
 
 
@@ -253,32 +271,15 @@
 
 (defn split
   [s [sep r"\s+"] [num None]]
-  (if-not num
+  (if (not num)
       (cond
-        [(none? s) s]
-        [(string? sep) (regex.split (regex.compile sep) s)]
+        [(is s None) s]
+        [(isinstance sep str) (regex.split (regex.compile sep) s)]
         [:else (raise (ValueError "Invalid arguments."))])
       (cond
-        [(none? s) s]
-        [(string? sep) (regex.split (regex.compile sep) s num)]
+        [(is s None) s]
+        [(isinstance sep str) (regex.split (regex.compile sep) s num)]
         [:else (rase (ValueError "Invalid arguments."))])))
-
-(defn reverse
-  [s]
-  "Return string reversed."
-  (when (string? s)
-    (cut s None None -1)))
-
-(defn chars
-  [s]
-  "Split a string in a seq of chars."
-  (when (string? s)
-    (lfor c s c)))
-
-(defn lines
-  [s]
-  "Return a list of the lines in the string."
-  (split s r"\n|\r\n"))
 
 (defn unlines
   [s]
@@ -290,7 +291,7 @@
   [s [re r"[\p{N}\p{L}_-]+"]]
   "Returns a vector of the words in the string."
   (if re
-      (when (string? s)
+      (when (isinstance s str)
         (list (regex.findall re s)))))
 
 (defn join
@@ -303,13 +304,13 @@
 (defn surround
   [s wrap]
   "Surround a string with another string or character."
-  (when (string? s)
+  (when (isinstance s str)
     (.join "" [wrap s wrap])))
 
 (defn unsurround
   [s surrounding]
   "Unsurround a string surrounded by another string or character."
-  (when (string? s)
+  (when (isinstance s str)
     (setv surrounding (str surrounding)
           length (len surrounding)
           fstr (cut s 0 length)
@@ -329,19 +330,19 @@
   [s [qchar "\""]]
   (unsurround s qchar))
 
-(defn -stylize-split
+(defn _stylize-split
   [s]
   (setv re1 (regex.compile r"(\p{Lu}+[\p{Ll}'\p{Ps}\p{Pe}]*)")
         re2 (regex.compile r"[^\p{L}\p{N}'\p{Ps}\p{Pe}]+"))
-  (->> s
-      str
-      (regex.sub re1 r"-\1")
-      (regex.split re2)
-      list))
+  (some->> s
+     str
+     (regex.sub re1 r"-\1")
+     (regex.split re2)
+     list))
 
-(defn -stylize-join
+(defn _stylize-join
   [coll join-with first-fn [rest-fn None]]
-  (when (iterable? coll)
+  (when (isinstance coll Iterable)
     (setv (, head #* tail) coll)
     (if rest-fn
         (.join join-with (chain [(first-fn head)] (map rest-fn tail)))
@@ -349,19 +350,22 @@
 
 (defn stylize
   [s first-fn join-with [rest-fn None]]
-    (setv remove-empty (fn [seq] (remove empty? seq))
-          rest-fn (if-not rest-fn first-fn rest-fn))
-   (-> s
-       -stylize-split
-       remove-empty
-       (-stylize-join join-with first-fn rest-fn )))
+  (defn remove-empty [seq]
+    (ap-filter (not (empty? it)) seq))
+
+  (setv rest-fn (or rest-fn first-fn))
+
+  (some-> s
+     _stylize-split
+     remove-empty
+     (_stylize-join join-with first-fn rest-fn )))
 
 (defn capital
   [s]
   "Uppercases the first character of a string"
   (if (empty-or-none? s)
       s
-      (+ (upper (first s)) (cut s 1))))
+      (+ (upper (first s)) (cut s 1 None))))
 
 (defn camel
   [s]
@@ -411,17 +415,17 @@
      (js-selector \"-pascal-case-me\") ;; => PascalCaseMe
      (js-selector \"camel-case-me\") ;; => camelCaseMe
   accepts keywords and strings, with any standard delimiter"
-  (-stylize-join (-stylize-split s) "" identity capital))
+  (_stylize-join (_stylize-split s) "" identity capital))
 
 (defn css-selector
   [s]
   "Output will be either:
-     (js-selector \"LeadingDash\") ;; => -leading-dash
-     (js-selector \"noLeadingDash\") ;; => no-leading-dash
+     (css-selector \"LeadingDash\") ;; => -leading-dash
+     (css-selector \"noLeadingDash\") ;; => no-leading-dash
   accepts keywords and strings, with any standard delimiter"
   (some-> s
-      -stylize-split
-      (-stylize-join "-" lower)))
+         _stylize-split
+         (_stylize-join "-" lower)))
 
 (setv -slug-tr-map
       (dict (zip "ąàáäâãåæăćčĉęèéëêĝĥìíïîĵłľńňòóöőôõðøśșšŝťțŭùúüűûñÿýçżźž"
@@ -431,16 +435,16 @@
   [s]
   "Transform text into a URL slug."
   (some-> (lower s)
-          (.translate (str.maketrans -slug-tr-map))
-          (replace r"[^\w\s]+" "")
-          (replace r"\s+" "-")))
+         (.translate (str.maketrans -slug-tr-map))
+         (replace r"[^\w\s]+" "")
+         (replace r"\s+" "-")))
 
 (defn uslug
   [s]
   "Unicode friendly version of `slug` function."
   (some-> (lower s)
-          (replace r"[^\p{L}\p{N}+]" " ")
-          (replace r"[\p{Z}\s]+" "-")))
+         (replace r"[^\p{L}\p{N}+]" " ")
+         (replace r"[\p{Z}\s]+" "-")))
 
 (defn keyword
   [k]
@@ -453,7 +457,7 @@
   "General purpose function for parse number like
   string to number. It works with both integers
   and floats."
-  (if (none? s)
+  (if (is s None)
       math.nan
       (if (numeric? s)
           (try (int s) (except [ValueError] (float s)))
@@ -463,37 +467,32 @@
   [s]
   "Return the double value from string."
   (cond
-    [(instance? Number s) (float s)]
-    [(string? s) (try (float s) (except [ValueError] math.nan))]
+    [(isinstance s Number) (float s)]
+    [(isinstance s str) (try (float s) (except [ValueError] math.nan))]
     [:else math.nan]))
 
 (defn parse-int
   [s]
   "Return the number value in integer form."
   (cond
-    [(instance? Number s) (int s)]
-    [(and (string? s)
+    [(isinstance s Number) (int s)]
+    [(and (isinstance s str)
           (numeric? s))
      (int s)]
     [:else math.nan]))
-
-(defn one-of?
-  [coll s]
-  "Returns true if s can be found in coll."
-  (bool (some (fn [x] (= x s)) coll)))
 
 (defn to-bool
   [s]
   "Returns true for 1/on/true/yes string values (case-insensitive),
   false otherwise."
-  (one-of? ["1" "on" "true" "yes"] (lower s)))
+  (in (lower s) ["1" "on" "true" "yes"]))
 
 (defn pad
   [s [length 0] [padding " "] [type :left]]
   "Pads the str with characters until the total string
   length is equal to the passed length parameter. By
   default, pads on the left with the space char."
-  (when (string? s)
+  (when (isinstance s str)
     (setv padding (cut padding 0 1)
           padlen (- length (len s))
           padlen (if (< padlen 0) 0 padlen))
@@ -509,8 +508,8 @@
   [s]
   "Converts all adjacent whitespace characters"
   (some-> s
-          (replace r"[\p{Z}\s]+" " ")
-          (replace r"^\s+|\s+$" "")))
+         (replace r"[\p{Z}\s]+" " ")
+         (replace r"^\s+|\s+$" "")))
 
 ;; (defn escape-html
 ;;   [s]
@@ -524,11 +523,11 @@
   [s tags mappings]
   (setv kwdize (comp keyword lower #%(getattr %1 "name"))
         tags (cond
-               [(none? tags) tags]
-               [(string? tags) (set (kwdize tags))]
+               [(is tags None) tags]
+               [(isinstance tags str) (set (kwdize tags))]
                [(coll? tags) (set (map kwdize tags))])
         rx (regex.compile r"<\/?([^<>]*)>"))
-  (replace s rx (if (none? tags)
+  (replace s rx (if (is tags None)
                     (fn [match] (.get mappings (kwdize (.group match 0)) ""))
                     (fn [match]
                       (setv tag (.group match 0)
@@ -541,9 +540,9 @@
   [s [tags None] [mapping None]]
   "Remove html tags from string."
   (cond
-    [(and (none? tags) (none? mapping)) (-strip-tags-impl s None {})]
-    [(and tags (none? mapping))
-     (if (instance? dict tags)
+    [(and (is tags None) (is mapping None)) (-strip-tags-impl s None {})]
+    [(and tags (is mapping None))
+     (if (isinstance tags dict)
          (-strip-tags-impl s None tags)
          (-strip-tags-impl s tags {}))]
     [(and tags mapping) (-strip-tags-impl s tags mapping)]))
@@ -552,21 +551,21 @@
   [s [r None]]
   (defn helper
     [s r]
-    (->> s lines (map (fn [x] (replace x r ""))) unlines))
+    (->> s .splitlines (map (fn [x] (replace x r ""))) unlines))
 
   (if r
       (helper s r)
       (do (setv all-indents (->> (rest (lines s))
-                                 (remove blank?)
-                                 list
-                                 (+ [(last (lines s))])
-                                 (map (fn [x]
-                                        (as-> x $
-                                             (regex.finditer r"^( +)" $)
-                                             (next $)
-                                             (.group $ 0)
-                                             (len $)
-                                             ))))
+                               (remove blank?)
+                               list
+                               (+ [(last (lines s))])
+                               (map (fn [x]
+                                      (as-> x $
+                                           (regex.finditer r"^( +)" $)
+                                           (next $)
+                                           (.group $ 0)
+                                           (len $)
+                                           ))))
                 min-indent (min all-indents)
                 r (regex.compile (+ "^ {" (str min-indent) "}")))
           (helper s r))))

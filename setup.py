@@ -27,7 +27,7 @@ setup(
     packages=find_packages(exclude=["tests"]),
     package_data={"cuerdas": ["*.hy"]},
     include_package_data=True,
-    install_requires=["hy >= 0.17.0", "regex"],
+    install_requires=["hy >= 1.0a3", "toolz", "regex"],
     license="BSD",
     keywords="cuerdas",
     classifiers=[

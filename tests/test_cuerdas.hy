@@ -6,8 +6,8 @@
   (math.isnan s))
 
 (defn empty-tests
-  [fn?]
-  (not (or (fn? None) (fn? "") (fn? " "))))
+  [func]
+  (not (or (func None) (func "") (func " "))))
 
 (defn test-lower []
   (assert (= None (cds.lower None)))
@@ -153,7 +153,7 @@
     (assert (cds.word? "ال-ع_ربية")))
 
   (defn test-uslug []
-    (assert (none? (cds.uslug None)))
+    (assert (is (cds.uslug None) None))
     (assert (= "русский-001-foobar" (cds.uslug "Русский 001   foobar"))))
 
   (defn test-alphanum? []
@@ -212,15 +212,15 @@
     (assert (= "aaa" (cds.unsurround "-aaa-" "-")))
     (assert (= "aaa" (cds.unsurround "-^-aaa-^-" "-^-"))))
 
-  (defn test-chars []
-    (assert (= None (cds.chars None)))
-    (assert (= ["a" "b"] (cds.chars "ab"))))
+  ;; (defn test-chars []
+  ;;   (assert (= None (cds.chars None)))
+  ;;   (assert (= ["a" "b"] (cds.chars "ab"))))
 
-  (defn test-reverse []
-    (assert (= None (cds.reverse None)))
-    (assert (= "cba" (cds.reverse "abc")))
-    (assert (= "anañam anañam rab 𝌆 oof"
-             (cds.reverse "foo 𝌆 bar mañana mañana"))))
+  ;; (defn test-reverse []
+  ;;   (assert (= None (cds.reverse None)))
+  ;;   (assert (= "cba" (cds.reverse "abc")))
+  ;;   (assert (= "anañam anañam rab 𝌆 oof"
+  ;;            (cds.reverse "foo 𝌆 bar mañana mañana"))))
 
   ;; (defn test-prune []
   ;;   (assert (= None (cds.prune None 8)))
@@ -235,14 +235,14 @@
   (defn test-join []
     (assert (= "ab" (cds.join ["a" "b"]))))
 
- (defn test-quote []
-    (assert (= None (cds.quote None)))
-    (assert (= "\"a\"" (cds.quote "a")))
-    (assert (= "\"\"\"" (cds.quote "\""))))
+ ;; (defn test-quote []
+ ;;    (assert (= None (cds.quote None)))
+ ;;    (assert (= "\"a\"" (cds.quote "a")))
+ ;;    (assert (= "\"\"\"" (cds.quote "\""))))
 
-  (defn test-unquote []
-    (assert (= "\"" (cds.unquote "\"\"\"")))
-    (assert (= "a" (cds.unquote "\"a\""))))
+  ;; (defn test-unquote []
+  ;;   (assert (= "\"" (cds.unquote "\"\"\"")))
+  ;;   (assert (= "a" (cds.unquote "\"a\""))))
 
   (defn test-slug []
     (assert (= None (cds.slug None)))
@@ -255,24 +255,24 @@
     (assert (= "a b" (cds.clean " a   b  ")))
     (assert (= "23.12.2014 10:09:19" (cds.clean "23.12.2014    10:09:19"))))
 
-  (defn test-escape-html []
-    (assert (= "&lt;div&gt;Blah blah blah&lt;/div&gt;"
-             (cds.escape-html "<div>Blah blah blah</div>"))))
+  ;; (defn test-escape-html []
+  ;;   (assert (= "&lt;div&gt;Blah blah blah&lt;/div&gt;"
+  ;;            (cds.escape-html "<div>Blah blah blah</div>"))))
 
-  (defn test-unescape-html []
-    (assert (= "<div>Blah blah blah</div>"
-             (cds.unescape-html "&lt;div&gt;Blah blah blah&lt;/div&gt;"))))
+  ;; (defn test-unescape-html []
+  ;;   (assert (= "<div>Blah blah blah</div>"
+  ;;            (cds.unescape-html "&lt;div&gt;Blah blah blah&lt;/div&gt;"))))
 
-  (defn test-strip-tags []
-    (assert (= None (cds.strip-tags None)))
-    (assert (= "just\ntext"
-             (cds.strip-tags "just<br>text" {:br "\n"})))
-    (assert (= "just some text"
-             (cds.strip-tags "<p>just <b>some</b> text</p>")))
-    (assert (= "just <b>some</b> text"
-             (cds.strip-tags "<p>just <b>some</b> text</p>" ["p"])))
-    (assert (= "just <b>some</b> text"
-             (cds.strip-tags "<p>just <b>some</b> text</p>" "P"))))
+  ;; (defn test-strip-tags []
+  ;;   (assert (= None (cds.strip-tags None)))
+  ;;   (assert (= "just\ntext"
+  ;;            (cds.strip-tags "just<br>text" {:br "\n"})))
+  ;;   (assert (= "just some text"
+  ;;            (cds.strip-tags "<p>just <b>some</b> text</p>")))
+  ;;   (assert (= "just <b>some</b> text"
+  ;;            (cds.strip-tags "<p>just <b>some</b> text</p>" ["p"])))
+  ;;   (assert (= "just <b>some</b> text"
+  ;;            (cds.strip-tags "<p>just <b>some</b> text</p>" "P"))))
 
   (defn test-parse-number []
     (assert (nan? (cds.parse-number None)))
@@ -280,26 +280,20 @@
     (assert (= 1.4 (cds.parse-number "1.4")))
     (assert (= 1 (cds.parse-number "1"))))
 
-  (defn test-parse-double []
-    (assert (nan? (cds.parse-double None)))
-    (assert (nan? (cds.parse-double "foobar")))
-    (assert (= 1.4 (cds.parse-double "1.4")))
-    (assert (= 1.0 (cds.parse-double "1")))
-    (assert (= 1.4 (cds.parse-double 1.4)))
-    (assert (= 1.0 (cds.parse-double 1))))
+  ;; (defn test-parse-double []
+  ;;   (assert (nan? (cds.parse-double None)))
+  ;;   (assert (nan? (cds.parse-double "foobar")))
+  ;;   (assert (= 1.4 (cds.parse-double "1.4")))
+  ;;   (assert (= 1.0 (cds.parse-double "1")))
+  ;;   (assert (= 1.4 (cds.parse-double 1.4)))
+  ;;   (assert (= 1.0 (cds.parse-double 1))))
 
-  (defn test-parse-int []
-    (assert (nan? (cds.parse-int None)))
-    (assert (nan? (cds.parse-int "foobar")))
-    (assert (= 1 (cds.parse-int "1.4")))
-    (assert (= 1 (cds.parse-int 1.4)))
-    (assert (= 1 (cds.parse-int 1))))
-
-  (defn test-one-of? []
-    (assert (cds.one-of? ["test" "test2" "test3"] "test3"))
-    (assert (cds.one-of? '("test" "test2") "test2"))
-    (assert (not (cds.one-of? ["test" "test2"] "test3")))
-    (assert (not (cds.one-of? ["test" "test2"] None))))
+  ;; (defn test-parse-int []
+  ;;   (assert (nan? (cds.parse-int None)))
+  ;;   (assert (nan? (cds.parse-int "foobar")))
+  ;;   (assert (= 1 (cds.parse-int "1.4")))
+  ;;   (assert (= 1 (cds.parse-int 1.4)))
+  ;;   (assert (= 1 (cds.parse-int 1))))
 
   (defn test-to-bool []
     (assert (empty-tests cds.to-bool))
@@ -311,18 +305,18 @@
     (assert (not (cds.to-bool "False")))
     (assert (not (cds.to-bool "hello"))))
 
-  (defn test-format []
-    (assert (= None (cds.format None "pepe")))
-    (assert (= "hello pepe" (cds.format "hello %s" "pepe")))
-    (assert (= "hello pepe" (cds.format "hello %(name)s" {:name "pepe"}))))
+  ;; (defn test-format []
+  ;;   (assert (= None (cds.format None "pepe")))
+  ;;   (assert (= "hello pepe" (cds.format "hello %s" "pepe")))
+  ;;   (assert (= "hello pepe" (cds.format "hello %(name)s" {:name "pepe"}))))
 
   (defn test-pad []
-    (assert (= None (cds.pad None {:length 8})))
-    (assert (= "       1" (cds.pad "1" {:length 8})))
-    (assert (= "00000001" (cds.pad "1" {:length 8 :padding "0"})))
-    (assert (= "10000000" (cds.pad "1" {:length 8 :padding "0" :type :right})))
-    (assert (= "00001000" (cds.pad "1" {:length 8 :padding "0" :type :both})))
-    (assert (= "12345" (cds.pad "12345" {:padding "0" :length 4}))))
+    (assert (= None (cds.pad None :length 8)))
+    (assert (= "       1" (cds.pad "1" :length 8)))
+    (assert (= "00000001" (cds.pad "1" :length 8 :padding "0")))
+    (assert (= "10000000" (cds.pad "1" :length 8 :padding "0" :type :right)))
+    (assert (= "00001000" (cds.pad "1" :length 8 :padding "0" :type :both)))
+    (assert (= "12345" (cds.pad "12345" :padding "0" :length 4))))
 
   (defn test-capital []
     (assert (= None (cds.capital None)))
@@ -330,19 +324,19 @@
     (assert (= "Foo" (cds.capital "foo")))
     (assert (= "FooBar" (cds.capital "fooBar"))))
 
-  (defn test-strip-prefix []
-    (assert (= "ab" (cds.strip-prefix "ab" None)))
-    (assert (= None (cds.strip-prefix None None)))
-    (assert (= "a" (cds.strip-prefix "-=a" "-=")))
-    (assert (= "a" (cds.strip-prefix "-a" \-)))
-    (assert (= "=-a" (cds.strip-prefix "=-a" "-="))))
+  ;; (defn test-strip-prefix []
+  ;;   (assert (= "ab" (cds.strip-prefix "ab" None)))
+  ;;   (assert (= None (cds.strip-prefix None None)))
+  ;;   (assert (= "a" (cds.strip-prefix "-=a" "-=")))
+  ;;   (assert (= "a" (cds.strip-prefix "-a" \-)))
+  ;;   (assert (= "=-a" (cds.strip-prefix "=-a" "-="))))
 
-  (defn test-strip-suffix []
-    (assert (= "ab" (cds.strip-suffix "ab" None)))
-    (assert (= None (cds.strip-suffix None None)))
-    (assert (= "a" (cds.strip-suffix "a=-" "=-")))
-    (assert (= "a" (cds.strip-suffix "a-" \-)))
-    (assert (= "a-=" (cds.strip-suffix "a-=" "=-"))))
+  ;; (defn test-strip-suffix []
+  ;;   (assert (= "ab" (cds.strip-suffix "ab" None)))
+  ;;   (assert (= None (cds.strip-suffix None None)))
+  ;;   (assert (= "a" (cds.strip-suffix "a=-" "=-")))
+  ;;   (assert (= "a" (cds.strip-suffix "a-" \-)))
+  ;;   (assert (= "a-=" (cds.strip-suffix "a-=" "=-"))))
 
   ;; #?(:clj
   ;;    (defn test-strip-suffix []
@@ -413,10 +407,6 @@
     ;;   (assert (= ':foo-bar/key-that (cds.keyword n "KeyThat"))))
     )
 
-  (defn test-lines []
-    (assert (= None (cds.lines None)))
-    (assert (= ["foo" "bar"] (cds.lines "foo\nbar"))))
-
   (defn test-unlines []
     (assert (= None (cds.unlines None)))
     (assert (= "foo\nbar" (cds.unlines ["foo" "bar"])))
@@ -428,6 +418,3 @@
     (assert (= ["test"] (cds.words "test")))
     (assert (= ["one" "two" "3"] (cds.words "  one, two 3.  ")))
     (assert (= ["re" "test."] (cds.words " re,  test." r"[^, ]+"))))
-
-
-
