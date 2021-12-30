@@ -1,17 +1,22 @@
 ;; * Cuerdas
 ;; ** Imports
-(import regex
-        math
-        [collections.abc [Iterable]]
-        [itertools [chain]]
-        [toolz [identity first]]
-        [numbers [Number]])
+(import
+  math
+  collections.abc [Iterable]
+  itertools [chain]
+  numbers [Number]
 
-(require [hy.extra.anaphoric [*]])
+  regex
+  toolz [first identity]
+  hyrule [coll?])
+
+(require
+  hyrule [-> ->>]
+  hyrule.anaphoric *)
 
 ;; ** Helpers
 (defmacro defall [#* syms]
-  `(setv __all__ ~(lfor sym syms (mangle (str sym)))))
+  `(setv __all__ ~(lfor sym syms (hy.mangle (str sym)))))
 
 (defall empty? empty-or-none? includes? starts-with? ends-with? lower upper caseless=
   blank? alpha? digits? alphanum? word? letters? numeric? trim rtrim ltrim clean strip rstrip
@@ -26,8 +31,9 @@
   [expr #* forms]
   "When expr is not nil, threads it into the first form (via ->),
   and when that result is not nil, through the next etc"
-  (import [toolz [cons interpose last]])
-  (setv g (gensym)
+  (import toolz [cons interpose last]
+          hyrule [butlast])
+  (setv g (hy.gensym)
         steps (lfor step forms `(if (is ~g None) None (-> ~g ~step))))
   `(do
      (setv ~g ~expr
@@ -40,8 +46,9 @@
   [expr #* forms]
   "When expr is not nil, threads it into the first form (via ->),
   and when that result is not nil, through the next etc"
-  (import [toolz [cons interpose last]])
-  (setv g (gensym)
+  (import toolz [cons interpose last]
+          hyrule [butlast])
+  (setv g (hy.gensym)
         steps (lfor step forms `(if (is ~g None) None (->> ~g ~step))))
   `(do
      (setv ~g ~expr

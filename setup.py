@@ -27,7 +27,11 @@ setup(
     packages=find_packages(exclude=["tests"]),
     package_data={"cuerdas": ["*.hy"]},
     include_package_data=True,
-    install_requires=["hy >= 1.0a3", "toolz", "regex"],
+    install_requires=[
+        "hy @ git+https://github.com/hylang/hy@master#egg=hy-1.0",
+        "toolz",
+        "regex",
+    ],
     license="BSD",
     keywords="cuerdas",
     classifiers=[
