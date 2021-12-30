@@ -1,3 +1,5 @@
-hy>=1.0a3
+git+https://github.com/hylang/hy
 toolz
 regex
+
+pytest
