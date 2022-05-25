@@ -12,7 +12,7 @@
 
 (require
   hyrule [-> ->>]
-  hyrule.anaphoric *)
+  hyrule.anaphoric * :readers [%])
 
 ;; ** Helpers
 (defmacro defall [#* syms]
@@ -83,19 +83,19 @@
   "Check if the string starts with prefix"
   (when (isinstance s str)
     (cond
-      [(is prefix None) False]
-      [(empty? prefix) True]
-      [:else (.startswith s prefix)])))
+      (is prefix None) False
+      (empty? prefix) True
+      :else (.startswith s prefix))))
 
 (defn ends-with?
   [s suffix]
   "Check if the string ends with suffix."
   (when (isinstance s str)
     (cond
-      [(is suffix None) False]
-      [(is suffix None) False]
-      [(empty? suffix) True]
-      [:else (str.endswith s suffix)])))
+      (is suffix None) False
+      (is suffix None) False
+      (empty? suffix) True
+      :else (str.endswith s suffix))))
 
 (defn lower
   [s]
@@ -280,13 +280,13 @@
   [s [sep r"\s+"] [num None]]
   (if (not num)
       (cond
-        [(is s None) s]
-        [(isinstance sep str) (regex.split (regex.compile sep) s)]
-        [:else (raise (ValueError "Invalid arguments."))])
+        (is s None) s
+        (isinstance sep str) (regex.split (regex.compile sep) s)
+        :else (raise (ValueError "Invalid arguments.")))
       (cond
-        [(is s None) s]
-        [(isinstance sep str) (regex.split (regex.compile sep) s num)]
-        [:else (rase (ValueError "Invalid arguments."))])))
+        (is s None) s
+        (isinstance sep str) (regex.split (regex.compile sep) s num)
+        :else (rase (ValueError "Invalid arguments.")))))
 
 (defn unlines
   [s]
@@ -297,9 +297,8 @@
 (defn words
   [s [re r"[\p{N}\p{L}_-]+"]]
   "Returns a vector of the words in the string."
-  (if re
-      (when (isinstance s str)
-        (list (regex.findall re s)))))
+  (when (and re (isinstance s str))
+    (list (regex.findall re s))))
 
 (defn join
   [coll [separator None]]
@@ -350,7 +349,7 @@
 (defn _stylize-join
   [coll join-with first-fn [rest-fn None]]
   (when (isinstance coll Iterable)
-    (setv (, head #* tail) coll)
+    (setv #(head #* tail) coll)
     (if rest-fn
         (.join join-with (chain [(first-fn head)] (map rest-fn tail)))
         (.join join-with (map first-fn coll)))))
@@ -474,19 +473,17 @@
   [s]
   "Return the double value from string."
   (cond
-    [(isinstance s Number) (float s)]
-    [(isinstance s str) (try (float s) (except [ValueError] math.nan))]
-    [:else math.nan]))
+    (isinstance s Number) (float s)
+    (isinstance s str) (try (float s) (except [ValueError] math.nan))
+    :else math.nan))
 
 (defn parse-int
   [s]
   "Return the number value in integer form."
   (cond
-    [(isinstance s Number) (int s)]
-    [(and (isinstance s str)
-          (numeric? s))
-     (int s)]
-    [:else math.nan]))
+    (isinstance s Number) (int s)
+    (and (isinstance s str) (numeric? s)) (int s)
+    :else math.nan))
 
 (defn to-bool
   [s]
@@ -504,12 +501,12 @@
           padlen (- length (len s))
           padlen (if (< padlen 0) 0 padlen))
     (cond
-      [(= type :right ) (.join "" [s #* (repeat padding padlen)])]
-      [(= type :both) (.join ""
-                             [#* (repeat padding (math.ceil (/ padlen 2)))
-                              s
-                              #* (repeat padding (math.floor (/ padlen 2)))])]
-      [:left (.join "" [#* (repeat padding padlen) s])])))
+      (= type :right ) (.join "" [s #* (repeat padding padlen)])
+      (= type :both) (.join ""
+                            [#* (repeat padding (math.ceil (/ padlen 2)))
+                             s
+                             #* (repeat padding (math.floor (/ padlen 2)))])
+      :left (.join "" [#* (repeat padding padlen) s]))))
 
 (defn collapse-whitespace
   [s]
@@ -530,9 +527,9 @@
   [s tags mappings]
   (setv kwdize (comp keyword lower #%(getattr %1 "name"))
         tags (cond
-               [(is tags None) tags]
-               [(isinstance tags str) (set (kwdize tags))]
-               [(coll? tags) (set (map kwdize tags))])
+               (is tags None) tags
+               (isinstance tags str) (set (kwdize tags))
+               (coll? tags) (set (map kwdize tags)))
         rx (regex.compile r"<\/?([^<>]*)>"))
   (replace s rx (if (is tags None)
                     (fn [match] (.get mappings (kwdize (.group match 0)) ""))
@@ -547,12 +544,11 @@
   [s [tags None] [mapping None]]
   "Remove html tags from string."
   (cond
-    [(and (is tags None) (is mapping None)) (-strip-tags-impl s None {})]
-    [(and tags (is mapping None))
-     (if (isinstance tags dict)
-         (-strip-tags-impl s None tags)
-         (-strip-tags-impl s tags {}))]
-    [(and tags mapping) (-strip-tags-impl s tags mapping)]))
+    (and (is tags None) (is mapping None)) (-strip-tags-impl s None {})
+    (and tags (is mapping None)) (if (isinstance tags dict)
+                                     (-strip-tags-impl s None tags)
+                                     (-strip-tags-impl s tags {}))
+    (and tags mapping) (-strip-tags-impl s tags mapping)))
 
 (defn unindent
   [s [r None]]
