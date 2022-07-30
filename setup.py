@@ -28,7 +28,8 @@ setup(
     package_data={"cuerdas": ["*.hy"]},
     include_package_data=True,
     install_requires=[
-        "hy @ git+https://github.com/hylang/hy@master#egg=hy-1.0",
+        "hy",
+        "hyrule",
         "toolz",
         "regex",
     ],
